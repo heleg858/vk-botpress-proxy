@@ -5,10 +5,12 @@ const axios = require('axios');
 const app = express();
 app.use(bodyParser.json());
 
+// Строка подтверждения для ВКонтакте
+const CONFIRMATION_CODE = 'fb0fe1b4';
+
 // Настройки
 const VK_TOKEN = 'vk1.a.vOtdnyvb6OEcjJ1lCSfkLZA0D9gqE9bo5cCPnRziBNO8igUU7q_6wLRSoxiGx2JnSGbN503v9JEh6hnOR3yZnlPrNfkBeZ76KYHPM1Z0jLfehZGpuPb38571-7MKlitFE2GFbBMl7XLSfpK6CyvIUzIvhuFkmEoP-LmupmLRG8HV_dC4jsKNaoS0wP1czQBs9cfDq1DQhunb5k0qvvkLDw';
-const BOTPRESS_URL = 'https://app.botpress.cloud/api/v1/bots/46db839f-010d-4f74-9c7d-8c761e401ef3/converse'; // Исправленный URL с кавычками
-const CONFIRMATION_CODE = 'fb0fe1b4';
+const BOTPRESS_URL = 'https://app.botpress.cloud/api/v1/bots/46db839f-010d-4f74-9c7d-8c761e401ef3/converse'; // Убедись, что URL правильный
 
 // Обработка запросов от VK
 app.post('/vk-callback', async (req, res) => {
@@ -16,13 +18,13 @@ app.post('/vk-callback', async (req, res) => {
 
   // Подтверждение сервера
   if (body.type === 'confirmation') {
-    return res.send(CONFIRMATION_CODE);
+    return res.send(CONFIRMATION_CODE); // Возвращаем строку подтверждения
   }
 
-  // Новое сообщение от пользователя
+  // Обработка новых сообщений
   if (body.type === 'message_new') {
     const userMessage = body.object.message.text;
-    const userId = body.object.message.from_id; // ID пользователя ВКонтакте
+    const userId = body.object.message.from_id;
 
     try {
       // Отправка сообщения в Botpress
