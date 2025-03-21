@@ -10,7 +10,7 @@ const CONFIRMATION_CODE = 'fb0fe1b4';
 
 // Настройки
 const VK_TOKEN = 'vk1.a.vOtdnyvb6OEcjJ1lCSfkLZA0D9gqE9bo5cCPnRziBNO8igUU7q_6wLRSoxiGx2JnSGbN503v9JEh6hnOR3yZnlPrNfkBeZ76KYHPM1Z0jLfehZGpuPb38571-7MKlitFE2GFbBMl7XLSfpK6CyvIUzIvhuFkmEoP-LmupmLRG8HV_dC4jsKNaoS0wP1czQBs9cfDq1DQhunb5k0qvvkLDw';
-const BOTPRESS_URL = 'https://webhook.botpress.cloud/04e42471-c21c-4d75-9f1c-0f2eae4c5df3'; // Убедись, что URL правильный
+const BOTPRESS_URL = 'https://webhook.botpress.cloud/f2621739-e299-483b-a055-1622a58232f6'; // Убедись, что URL правильный
 
 // Обработка запросов от VK
 app.post('/vk-callback', async (req, res) => {
