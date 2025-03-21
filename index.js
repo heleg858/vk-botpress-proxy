@@ -7,7 +7,7 @@ app.use(bodyParser.json());
 
 // Настройки
 const VK_TOKEN = 'vk1.a.vOtdnyvb6OEcjJ1lCSfkLZA0D9gqE9bo5cCPnRziBNO8igUU7q_6wLRSoxiGx2JnSGbN503v9JEh6hnOR3yZnlPrNfkBeZ76KYHPM1Z0jLfehZGpuPb38571-7MKlitFE2GFbBMl7XLSfpK6CyvIUzIvhuFkmEoP-LmupmLRG8HV_dC4jsKNaoS0wP1czQBs9cfDq1DQhunb5k0qvvkLDw';
-const BOTPRESS_URL = https://app.botpress.cloud/api/v1/bots/46db839f-010d-4f74-9c7d-8c761e401ef3/converse; // Используем правильный Bot ID
+const BOTPRESS_URL = 'https://app.botpress.cloud/api/v1/bots/46db839f-010d-4f74-9c7d-8c761e401ef3/converse'; // Исправленный URL с кавычками
 const CONFIRMATION_CODE = 'fb0fe1b4';
 
 // Обработка запросов от VK
