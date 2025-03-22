@@ -21,7 +21,7 @@ app.post('/vk-webhook', async (req, res) => {
   if (body.type === 'message_new') {
     const messageText = body.object.message.text;
     const vkUserId = body.object.message.from_id;
-    const conversationId = `vk-${vkUserId}`;
+    const conversationId = vk-${vkUserId};
 
     try {
       await axios.post(BOTPRESS_API_URL, {
@@ -33,7 +33,7 @@ app.post('/vk-webhook', async (req, res) => {
         }
       }, {
         headers: {
-          Authorization: `Bearer ${BOTPRESS_API_TOKEN}`,
+          Authorization: Bearer ${BOTPRESS_API_TOKEN},
           'Content-Type': 'application/json'
         }
       });
