@@ -1,63 +1,36 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const axios = require('axios');
+const axios = require('axios');  // Добавляем axios для отправки запросов
 
 const app = express();
-app.use(bodyParser.json());
+const port = process.env.PORT || 3000;
 
-// Строка подтверждения для ВКонтакте
-const CONFIRMATION_CODE = '79a2ae30';
+app.use(bodyParser.json()); // Для парсинга JSON тела запросов
 
-// Настройки
-const VK_TOKEN = 'vk1.a.vOtdnyvb6OEcjJ1lCSfkLZA0D9gqE9bo5cCPnRziBNO8igUU7q_6wLRSoxiGx2JnSGbN503v9JEh6hnOR3yZnlPrNfkBeZ76KYHPM1Z0jLfehZGpuPb38571-7MKlitFE2GFbBMl7XLSfpK6CyvIUzIvhuFkmEoP-LmupmLRG8HV_dC4jsKNaoS0wP1czQBs9cfDq1DQhunb5k0qvvkLDw';
-const BOTPRESS_URL = 'https://webhook.botpress.cloud/55d7d688-09dc-4529-9ee3-a931a3fc265c'; // Убедись, что URL правильный
+// URL Webhook Botpress
+const botpressWebhookUrl = 'https://webhook.botpress.cloud/55d7d688-09dc-4529-9ee3-a931a3fc265c';
 
-// Обработка запросов от VK
-app.post('/vk-callback', async (req, res) => {
-  const body = req.body;
+// Обработчик для подтверждения вебхука от ВКонтакте
+app.post('/callback', (req, res) => {
+  const data = req.body;
 
-  // Подтверждение сервера
-  if (body.type === 'confirmation') {
-    return res.send(CONFIRMATION_CODE); // Возвращаем строку подтверждения
-  }
-
-  // Обработка новых сообщений
-  if (body.type === 'message_new') {
-    const userMessage = body.object.message.text;
-    const userId = body.object.message.from_id;
-
-    try {
-      // Отправка сообщения в Botpress
-      const botResponse = await axios.post(`${BOTPRESS_URL}/${userId}`, {
-        type: 'text',
-        text: userMessage
-      });
-
-      const reply = botResponse.data.responses?.[0]?.payload?.text || 'Извините, я не понял ваш вопрос.';
-
-      // Отправка ответа пользователю в VK
-      await axios.post('https://api.vk.com/method/messages.send', null, {
-        params: {
-          access_token: VK_TOKEN,
-          v: '5.131',
-          peer_id: userId,
-          message: reply,
-          random_id: Math.floor(Math.random() * 1000000)
-        }
-      });
-
-      res.send('ok');
-    } catch (err) {
-      console.error('Ошибка при обработке сообщения:', err);
-      res.send('ok');
-    }
+  if (data.type === 'confirmation') {
+    // Возвращаем строку подтверждения для ВКонтакте
+    res.status(200).send('79a2ae30');
   } else {
-    res.send('ok');
+    // Пересылаем запрос от ВКонтакте на Botpress
+    axios.post(botpressWebhookUrl, data)
+      .then(response => {
+        // Отправляем успешный ответ
+        res.status(200).json(response.data);
+      })
+      .catch(error => {
+        console.error('Ошибка при пересылке запроса на Botpress:', error);
+        res.status(500).send('Ошибка сервера');
+      });
   }
 });
 
-// Запуск сервера
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Сервер запущен на порту ${PORT}`);
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
