@@ -28,24 +28,8 @@ app.post('/callback', async (req, res) => {
     const userId = object.message.from_id;
     const userMessage = object.message.text;
 
-    // Отправляем сообщение в Botpress
-    const botResponse = await axios.post(BOTPRESS_URL, {
-      userId,
-      text: userMessage,
-    });
-
-    // Отправляем ответ пользователю
-    await axios.post('https://api.vk.com/method/messages.send', {
-      access_token: VK_TOKEN,
-      user_id: userId,
-      message: botResponse.data.text,
-      v: '5.131',
-    });
-  }
-
-  res.send('ok');
-});
-
+    try {
+      //
 // Запуск сервера
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
