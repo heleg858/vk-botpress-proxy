@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
+const EventSource = require('eventsource');
 const app = express();
 
 app.use(bodyParser.json());
@@ -11,6 +12,39 @@ const BOTPRESS_API_URL = `https://chat.botpress.cloud/${BOTPRESS_WEBHOOK_ID}`;
 
 // Токен вашего сообщества ВКонтакте
 const VK_TOKEN = 'vk1.a.vOtdnyvb6OEcjJ1lCSfkLZA0D9gqE9bo5cCPnRziBNO8igUU7q_6wLRSoxiGx2JnSGbN503v9JEh6hnOR3yZnlPrNfkBeZ76KYHPM1Z0jLfehZGpuPb38571-7MKlitFE2GFbBMl7XLSfpK6CyvIUzIvhuFkmEoP-LmupmLRG8HV_dC4jsKNaoS0wP1czQBs9cfDq1DQhunb5k0qvvkLDw';
+
+// Функция для прослушивания событий от Botpress
+function listenToBotpressEvents(conversationId, userKey, userId) {
+  const sseUrl = `${BOTPRESS_API_URL}/conversations/${conversationId}/listen`;
+  const eventSource = new EventSource(sseUrl, {
+    headers: { 'x-user-key': userKey },
+  });
+
+  eventSource.onmessage = (event) => {
+    const message = JSON.parse(event.data);
+
+    // Проверяем, что это сообщение от бота
+    if (message.type === 'text' && message.authorId !== userId) {
+      console.log('Ответ от бота:', message.text);
+
+      // Отправляем ответ пользователю в ВКонтакте
+      axios.post('https://api.vk.com/method/messages.send', {
+        access_token: VK_TOKEN,
+        user_id: userId,
+        message: message.text,
+        v: '5.131',
+      }).then(() => {
+        console.log('Ответ отправлен пользователю:', userId);
+      }).catch((error) => {
+        console.error('Ошибка при отправке ответа:', error.message);
+      });
+    }
+  };
+
+  eventSource.onerror = (error) => {
+    console.error('Ошибка SSE:', error);
+  };
+}
 
 // Подтверждение сервера для Callback API
 app.get('/callback', (req, res) => {
@@ -41,6 +75,9 @@ app.post('/callback', async (req, res) => {
       });
       const conversationId = conversationResponse.data.id;
 
+      // Начинаем прослушивание событий от бота
+      listenToBotpressEvents(conversationId, userKey, userId);
+
       // Отправляем сообщение в Botpress
       await axios.post(`${BOTPRESS_API_URL}/conversations/${conversationId}/messages`, {
         type: 'text',
@@ -49,16 +86,7 @@ app.post('/callback', async (req, res) => {
         headers: { 'x-user-key': userKey },
       });
 
-      // Получаем ответ от бота (через SSE или Webhook)
-      // Здесь можно добавить логику для получения ответа
-
-      // Отправляем ответ пользователю
-      await axios.post('https://api.vk.com/method/messages.send', {
-        access_token: VK_TOKEN,
-        user_id: userId,
-        message: 'Ответ от бота', // Замените на реальный ответ
-        v: '5.131',
-      });
+      console.log('Сообщение отправлено в Botpress');
     } catch (error) {
       console.error('Ошибка при обработке сообщения:', error.message);
       res.status(500).send('Internal Server Error');
