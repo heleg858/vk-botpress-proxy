@@ -1,5 +1,27 @@
-// ...
+const express = require('express');
+const axios = require('axios');
 
+// 1. Инициализация Express-приложения
+const app = express();
+
+// 2. Проверка переменных окружения
+const checkEnv = (name) => {
+  if (!process.env[name]) {
+    throw new Error(`Переменная окружения ${name} не задана!`);
+  }
+};
+
+checkEnv('VK_TOKEN');
+checkEnv('BOTPRESS_URL');
+checkEnv('VK_CONFIRMATION_CODE');
+checkEnv('BOTPRESS_API_KEY'); // Добавьте, если используете API-ключ
+
+const { VK_TOKEN, BOTPRESS_URL, VK_CONFIRMATION_CODE, BOTPRESS_API_KEY } = process.env;
+
+// 3. Подключение middleware
+app.use(express.json());
+
+// 4. Определение маршрутов (теперь app уже существует)
 app.all('/webhook', async (req, res) => {
   const event = req.body || req.query;
 
@@ -20,13 +42,12 @@ app.all('/webhook', async (req, res) => {
         },
         {
           headers: {
-            Authorization: `Bearer ${process.env.BOTPRESS_API_KEY}`,
+            Authorization: `Bearer ${BOTPRESS_API_KEY}`,
             'Content-Type': 'application/json'
           }
         }
       );
 
-      // Отправка ответа в ВК
       await axios.post('https://api.vk.com/method/messages.send', {
         access_token: VK_TOKEN,
         user_id: userId,
@@ -40,4 +61,10 @@ app.all('/webhook', async (req, res) => {
   }
 
   res.send('ok');
+});
+
+// 5. Запуск сервера
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log('Сервер запущен. BOTPRESS_URL:', BOTPRESS_URL);
 });
