@@ -110,21 +110,22 @@ app.post('/webhook', async (req, res) => {
 });
 
 // ======================================
-// 4. Обработчик ответов от Botpress
+// 4. Обработчик ответов от Botpress (ИСПРАВЛЕННАЯ ВЕРСИЯ)
 // ======================================
 app.post('/botpress-webhook', async (req, res) => {
   try {
     console.log('[BOTPRESS] Получен ответ:', JSON.stringify(req.body, null, 2));
     
-    const { conversationId, text } = req.body;
+    // Извлекаем данные из payload
+    const { conversationId, payload } = req.body;
     
-    if (!conversationId || !text) {
+    if (!conversationId || !payload?.text) {
       console.error('[BOTPRESS] Отсутствуют обязательные поля');
-      return res.status(400).send('Bad Request');
+      return res.status(400).json({ error: 'Bad Request' });
     }
 
     const userId = conversationId.replace('vk_conv_', '');
-    console.log(`[VK] Отправка ответа пользователю ${userId}: "${text}"`);
+    console.log(`[VK] Отправка ответа пользователю ${userId}: "${payload.text}"`);
 
     // Отправка в ВКонтакте
     const vkResponse = await axios.post(
@@ -132,7 +133,7 @@ app.post('/botpress-webhook', async (req, res) => {
       {
         access_token: VK_TOKEN,
         user_id: userId,
-        message: text,
+        message: payload.text,
         random_id: Date.now(),
         v: '5.199'
       }
@@ -145,7 +146,7 @@ app.post('/botpress-webhook', async (req, res) => {
       message: error.message,
       response: error.response?.data
     });
-    res.status(500).send('Internal Server Error');
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
