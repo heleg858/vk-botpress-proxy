@@ -6,7 +6,7 @@ const app = express();
 app.use(bodyParser.json());
 
 // Строка подтверждения для ВКонтакте
-const CONFIRMATION_CODE = 'fb0fe1b4';
+const CONFIRMATION_CODE = '79a2ae30';
 
 // Настройки
 const VK_TOKEN = 'vk1.a.vOtdnyvb6OEcjJ1lCSfkLZA0D9gqE9bo5cCPnRziBNO8igUU7q_6wLRSoxiGx2JnSGbN503v9JEh6hnOR3yZnlPrNfkBeZ76KYHPM1Z0jLfehZGpuPb38571-7MKlitFE2GFbBMl7XLSfpK6CyvIUzIvhuFkmEoP-LmupmLRG8HV_dC4jsKNaoS0wP1czQBs9cfDq1DQhunb5k0qvvkLDw';
