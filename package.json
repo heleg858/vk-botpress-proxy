@@ -1,18 +1,15 @@
 {
-  "name": "vk-botpress-proxy",
-  "version": "0.1.0",
-  "description": "A proxy server for integrating VK group messages with Botpress.",
-  "main": "server.js",
+  "name": "vk-botpress-bridge",
+  "version": "1.0.0",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node index.js"
   },
   "dependencies": {
-    "express": "^4.17.1",
-    "axios": "^0.21.1",
-    "body-parser": "^1.19.0",
-    "eventsource": "^2.0.2"
+    "express": "^4.18.2",
+    "axios": "^1.6.2"
   },
   "engines": {
-    "node": "16.x"
+    "node": ">=16.x"
   }
 }
