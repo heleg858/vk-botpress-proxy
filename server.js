@@ -54,7 +54,7 @@ app.post('/callback', async (req, res) => {
     }
   }
 
-  res.send('ok');
+  res.send('79a2ae30');
 });
 
 // Запуск сервера
