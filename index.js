@@ -1,20 +1,45 @@
+const express = require('express');
+const axios = require('axios');
+
+// 1. Инициализация приложения
+const app = express();
+
+// 2. Проверка переменных окружения
+const checkEnv = (name) => {
+  if (!process.env[name]) throw new Error(`Missing env var: ${name}`);
+};
+
+checkEnv('VK_TOKEN');
+checkEnv('BOTPRESS_URL');
+checkEnv('VK_CONFIRMATION_CODE');
+checkEnv('BOTPRESS_API_KEY');
+checkEnv('VK_SECRET');
+
+const {
+  VK_TOKEN,
+  BOTPRESS_URL,
+  VK_CONFIRMATION_CODE,
+  BOTPRESS_API_KEY,
+  VK_SECRET
+} = process.env;
+
+// 3. Настройка middleware
+app.use(express.json());
+
+// 4. Определение маршрутов (после инициализации app)
 app.all('/webhook', async (req, res) => {
   try {
-    // Проверка секрета
     if (req.body.secret !== VK_SECRET) {
-      console.log('Invalid secret');
       return res.status(403).send('Forbidden');
     }
 
     const event = req.body;
 
-    // Быстрая обработка ненужных событий
     if (event.type === 'message_typing_state') {
       return res.send('ok');
     }
 
     if (event.type === 'confirmation') {
-      console.log('Confirmation handled');
       return res.send(VK_CONFIRMATION_CODE);
     }
 
@@ -23,14 +48,11 @@ app.all('/webhook', async (req, res) => {
       const userId = message.from_id;
       const text = message.text;
 
-      console.log('Processing message:', text);
-
-      // Отправка в Botpress
       const bpResponse = await axios.post(
         BOTPRESS_URL,
         {
           text: text,
-          userId: `vk_${userId}` // Добавьте префикс для уникальности
+          userId: `vk_${userId}`
         },
         {
           headers: {
@@ -40,9 +62,6 @@ app.all('/webhook', async (req, res) => {
         }
       );
 
-      console.log('Botpress reply:', bpResponse.data);
-
-      // Отправка ответа в ВК
       await axios.post('https://api.vk.com/method/messages.send', {
         access_token: VK_TOKEN,
         user_id: userId,
@@ -54,7 +73,13 @@ app.all('/webhook', async (req, res) => {
 
     res.send('ok');
   } catch (error) {
-    console.error('Global error:', error.response?.data || error.message);
-    res.send('ok'); // Всегда возвращаем ok для ВК
+    console.error('Error:', error);
+    res.send('ok');
   }
+});
+
+// 5. Запуск сервера
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
