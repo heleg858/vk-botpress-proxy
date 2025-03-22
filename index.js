@@ -4,24 +4,26 @@ const app = express();
 
 const VK_TOKEN = process.env.VK_TOKEN;
 const BOTPRESS_URL = process.env.BOTPRESS_URL;
+const VK_CONFIRMATION_CODE = process.env.VK_CONFIRMATION_CODE; // Ваш код "79a2ae30"
 
 app.use(express.json());
 
-app.post('/webhook', async (req, res) => {
-  const event = req.body;
+// Обработчик ВСЕХ запросов к /webhook (GET и POST)
+app.all('/webhook', async (req, res) => {
+  const event = req.body || req.query; // Для GET-запросов (confirmation) данные в req.query
 
-  // Подтверждение сервера
+  // Подтверждение сервера (GET-запрос)
   if (event.type === 'confirmation') {
-    return res.send(process.env.VK_CONFIRMATION_CODE);
+    return res.send(VK_CONFIRMATION_CODE); // Просто строку "79a2ae30"
   }
 
-  // Обработка сообщений
+  // Обработка сообщений (POST-запрос)
   if (event.type === 'message_new') {
     const userId = event.object.message.from_id;
     const messageText = event.object.message.text;
 
     try {
-      // Отправка в Botpress
+      // Отправка сообщения в Botpress
       const response = await axios.post(BOTPRESS_URL, {
         text: messageText,
         userId: userId.toString()
@@ -40,10 +42,9 @@ app.post('/webhook', async (req, res) => {
     }
   }
 
-  res.send('ok');
-}); // <-- Закрывающая скобка для app.post()
+  res.send('ok'); // Всегда возвращаем "ok" для других событий
+});
 
-// Запуск сервера
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Сервер запущен на порту ${PORT}`);
