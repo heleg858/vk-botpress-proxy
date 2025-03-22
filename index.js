@@ -2,17 +2,15 @@ const express = require('express');
 const axios = require('axios');
 const app = express();
 
-// Конфигурация из переменных окружения
 const VK_TOKEN = process.env.VK_TOKEN;
 const BOTPRESS_URL = process.env.BOTPRESS_URL;
 
 app.use(express.json());
 
-// Обработчик вебхука от ВК
 app.post('/webhook', async (req, res) => {
   const event = req.body;
 
-  // Подтверждение сервера (confirmation)
+  // Подтверждение сервера
   if (event.type === 'confirmation') {
     return res.send(process.env.VK_CONFIRMATION_CODE);
   }
@@ -23,7 +21,7 @@ app.post('/webhook', async (req, res) => {
     const messageText = event.object.message.text;
 
     try {
-      // Отправка сообщения в Botpress
+      // Отправка в Botpress
       const response = await axios.post(BOTPRESS_URL, {
         text: messageText,
         userId: userId.toString()
@@ -43,7 +41,10 @@ app.post('/webhook', async (req, res) => {
   }
 
   res.send('ok');
-});
+}); // <-- Закрывающая скобка для app.post()
 
 // Запуск сервера
-const PORT = process.env.PORT ||
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Сервер запущен на порту ${PORT}`);
+});
