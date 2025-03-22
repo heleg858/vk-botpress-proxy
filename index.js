@@ -1,43 +1,58 @@
 const express = require('express');
 const axios = require('axios');
-
-// 1. Инициализация Express-приложения
 const app = express();
 
-// 2. Проверка переменных окружения
 const checkEnv = (name) => {
-  if (!process.env[name]) {
-    throw new Error(`Переменная окружения ${name} не задана!`);
-  }
+  if (!process.env[name]) throw new Error(`Missing env var: ${name}`);
 };
 
 checkEnv('VK_TOKEN');
 checkEnv('BOTPRESS_URL');
 checkEnv('VK_CONFIRMATION_CODE');
-checkEnv('BOTPRESS_API_KEY'); // Добавьте, если используете API-ключ
+checkEnv('BOTPRESS_API_KEY');
+checkEnv('VK_SECRET'); // Добавляем проверку секрета
 
-const { VK_TOKEN, BOTPRESS_URL, VK_CONFIRMATION_CODE, BOTPRESS_API_KEY } = process.env;
+const {
+  VK_TOKEN,
+  BOTPRESS_URL,
+  VK_CONFIRMATION_CODE,
+  BOTPRESS_API_KEY,
+  VK_SECRET
+} = process.env;
 
-// 3. Подключение middleware
 app.use(express.json());
 
-// 4. Определение маршрутов (теперь app уже существует)
 app.all('/webhook', async (req, res) => {
-  const event = req.body || req.query;
+  try {
+    // 1. Проверка секретного ключа
+    if (req.body.secret !== VK_SECRET) {
+      console.warn('Invalid secret');
+      return res.status(403).send('Forbidden');
+    }
 
-  if (event.type === 'confirmation') {
-    return res.send(VK_CONFIRMATION_CODE);
-  }
+    // 2. Логирование входящего запроса
+    console.log('Incoming VK event:', JSON.stringify(req.body, null, 2));
 
-  if (event.type === 'message_new') {
-    const userId = event.object.message.from_id;
-    const messageText = event.object.message.text;
+    const event = req.body;
 
-    try {
-      const response = await axios.post(
+    // 3. Обработка подтверждения
+    if (event.type === 'confirmation') {
+      console.log('Confirmation request');
+      return res.send(VK_CONFIRMATION_CODE);
+    }
+
+    // 4. Обработка сообщений
+    if (event.type === 'message_new') {
+      const message = event.object.message;
+      const userId = message.from_id;
+      const text = message.text;
+
+      // 5. Отправка в Botpress
+      console.log('Sending to Botpress:', {text, userId});
+      const bpResponse = await axios.post(
         BOTPRESS_URL,
         {
-          text: messageText,
+          text: text,
           userId: userId.toString()
         },
         {
@@ -48,23 +63,25 @@ app.all('/webhook', async (req, res) => {
         }
       );
 
+      // 6. Отправка ответа в ВК
+      console.log('Botpress response:', bpResponse.data);
       await axios.post('https://api.vk.com/method/messages.send', {
         access_token: VK_TOKEN,
         user_id: userId,
-        message: response.data.reply,
+        message: bpResponse.data.reply,
         random_id: Math.floor(Math.random() * 1e10),
-        v: '5.131'
+        v: '5.199'
       });
-    } catch (error) {
-      console.error('Ошибка:', error.response?.data || error.message);
     }
-  }
 
-  res.send('ok');
+    res.send('ok');
+  } catch (error) {
+    console.error('Global error handler:', error);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
-// 5. Запуск сервера
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log('Сервер запущен. BOTPRESS_URL:', BOTPRESS_URL);
+  console.log(`Server started. Botpress URL: ${BOTPRESS_URL}`);
 });
