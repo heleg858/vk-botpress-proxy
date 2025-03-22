@@ -29,7 +29,34 @@ app.post('/callback', async (req, res) => {
     const userMessage = object.message.text;
 
     try {
-      //
+      // Отправляем сообщение в Botpress
+      const botResponse = await axios.post(BOTPRESS_URL, {
+        userId,
+        text: userMessage,
+      });
+
+      // Проверяем, что Botpress вернул ответ
+      if (!botResponse.data || !botResponse.data.text) {
+        throw new Error('Botpress не вернул ответ');
+      }
+
+      // Отправляем ответ пользователю
+      await axios.post('https://api.vk.com/method/messages.send', {
+        access_token: VK_TOKEN,
+        user_id: userId,
+        message: botResponse.data.text,
+        v: '5.131',
+      });
+    } catch (error) {
+      console.error('Ошибка при обработке сообщения:', error);
+      res.status(500).send('Internal Server Error');
+      return;
+    }
+  }
+
+  res.send('ok');
+});
+
 // Запуск сервера
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
