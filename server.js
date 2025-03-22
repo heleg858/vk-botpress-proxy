@@ -29,11 +29,17 @@ app.post('/callback', async (req, res) => {
     const userMessage = object.message.text;
 
     try {
+      // Логируем входящее сообщение
+      console.log(`Received message from user ${userId}: ${userMessage}`);
+
       // Отправляем сообщение в Botpress
       const botResponse = await axios.post(BOTPRESS_URL, {
         userId,
         text: userMessage,
       });
+
+      // Логируем ответ от Botpress
+      console.log('Botpress response:', botResponse.data);
 
       // Проверяем, что Botpress вернул ответ
       if (!botResponse.data || !botResponse.data.text) {
@@ -47,14 +53,16 @@ app.post('/callback', async (req, res) => {
         message: botResponse.data.text,
         v: '5.131',
       });
+
+      console.log(`Response sent to user ${userId}: ${botResponse.data.text}`);
     } catch (error) {
-      console.error('Ошибка при обработке сообщения:', error);
+      console.error('Ошибка при обработке сообщения:', error.message);
       res.status(500).send('Internal Server Error');
       return;
     }
   }
 
-  res.send('79a2ae30');
+  res.send('79a2ae30'); // Возвращаем "ok" для подтверждения успешной обработки
 });
 
 // Запуск сервера
