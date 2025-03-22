@@ -109,7 +109,7 @@ app.post('/botpress-webhook', async (req, res) => {
       return res.status(400).json({ error: 'Invalid request format' });
     }
 
-    // Проверка токена перед отправкой
+    // Проверка токена
     if (!VK_TOKEN || VK_TOKEN.length < 50) {
       console.error('[VK] Некорректный токен');
       return res.status(500).json({ error: 'Invalid VK token configuration' });
@@ -125,19 +125,27 @@ app.post('/botpress-webhook', async (req, res) => {
       access_token: VK_TOKEN,
       user_id: userId,
       message: messageText,
-      random_id: Math.floor(Math.random() * 1000000000), // Более надежный random_id
+      random_id: Math.floor(Date.now() * Math.random()),
       v: '5.199'
     };
 
+    // Отладочная информация
+    console.log('[DEBUG] Первые 10 символов токена:', VK_TOKEN.slice(0, 10));
     console.log('[VK] Параметры запроса:', { 
       ...vkPayload, 
-      access_token: `${VK_TOKEN.slice(0, 6)}...${VK_TOKEN.slice(-4)}` // Скрываем полный токен в логах
+      access_token: `${VK_TOKEN.slice(0, 6)}...${VK_TOKEN.slice(-4)}`
     });
 
     try {
+      // Отправка через URLSearchParams
       const vkResponse = await axios.post(
         'https://api.vk.com/method/messages.send',
-        vkPayload
+        new URLSearchParams(vkPayload),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        }
       );
 
       if (vkResponse.data.error) {
