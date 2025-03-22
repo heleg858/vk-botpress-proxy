@@ -97,7 +97,7 @@ app.post('/webhook', async (req, res) => {
 });
 
 // ======================================
-// 4. Обработчик ответов от Botpress (Исправленная версия)
+// 4. Исправленный обработчик ответов от Botpress
 // ======================================
 app.post('/botpress-webhook', async (req, res) => {
   try {
@@ -107,6 +107,12 @@ app.post('/botpress-webhook', async (req, res) => {
     if (!req.body.conversationId || !req.body.payload?.text) {
       console.error('[BOTPRESS] Некорректный формат ответа');
       return res.status(400).json({ error: 'Invalid request format' });
+    }
+
+    // Проверка токена перед отправкой
+    if (!VK_TOKEN || VK_TOKEN.length < 50) {
+      console.error('[VK] Некорректный токен');
+      return res.status(500).json({ error: 'Invalid VK token configuration' });
     }
 
     const userId = req.body.conversationId.replace('vk_conv_', '');
@@ -119,24 +125,42 @@ app.post('/botpress-webhook', async (req, res) => {
       access_token: VK_TOKEN,
       user_id: userId,
       message: messageText,
-      random_id: Date.now(),
+      random_id: Math.floor(Math.random() * 1000000000), // Более надежный random_id
       v: '5.199'
     };
 
-    console.log('[VK] Параметры запроса:', vkPayload);
+    console.log('[VK] Параметры запроса:', { 
+      ...vkPayload, 
+      access_token: `${VK_TOKEN.slice(0, 6)}...${VK_TOKEN.slice(-4)}` // Скрываем полный токен в логах
+    });
 
-    // Отправка сообщения
-    const vkResponse = await axios.post(
-      'https://api.vk.com/method/messages.send',
-      vkPayload
-    );
+    try {
+      const vkResponse = await axios.post(
+        'https://api.vk.com/method/messages.send',
+        vkPayload
+      );
 
-    console.log('[VK] Ответ API:', vkResponse.data);
-    res.send('ok');
+      if (vkResponse.data.error) {
+        console.error('[VK] Ошибка API:', {
+          code: vkResponse.data.error.error_code,
+          message: vkResponse.data.error.error_msg
+        });
+        return res.status(500).json({ error: 'VK API Error' });
+      }
+
+      console.log('[VK] Сообщение успешно отправлено, ID:', vkResponse.data.response);
+      res.send('ok');
+    } catch (error) {
+      console.error('[VK] Ошибка сети:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data
+      });
+      res.status(500).json({ error: 'Network Error' });
+    }
   } catch (error) {
-    console.error('[ERROR] Ошибка отправки:', {
+    console.error('[ERROR] Ошибка обработки:', {
       message: error.message,
-      response: error.response?.data,
       stack: error.stack
     });
     res.status(500).json({ error: 'Internal Server Error' });
@@ -150,6 +174,6 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log('\n=== Сервер запущен ===');
   console.log(`Порт: ${PORT}`);
-  console.log(`Код подтверждения: ${VK_CONFIRMATION_CODE}`);
+  console.log(`Токен VK: ${VK_TOKEN ? `${VK_TOKEN.slice(0, 6)}...${VK_TOKEN.slice(-4)}` : 'не указан'}`);
   console.log('========================\n');
 });
